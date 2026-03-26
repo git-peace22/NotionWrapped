@@ -52,6 +52,7 @@ def _build_settings() -> Settings:
     if railway_domain:
         os.environ["REDIRECT_URI"] = f"https://{railway_domain}/auth/callback"
     s = Settings()
+    print(f"[DEBUG] settings.redirect_uri = {s.redirect_uri}", flush=True)
     yaml_cfg = _load_yaml_config()
 
     if "notion" in yaml_cfg:
