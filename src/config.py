@@ -45,14 +45,10 @@ def _load_yaml_config() -> dict:
 
 def _build_settings() -> Settings:
     import os
-    railway_vars = {k: v for k, v in os.environ.items() if "RAILWAY" in k or k == "PORT"}
-    print(f"[DEBUG] railway vars: {railway_vars}", flush=True)
-    print(f"[DEBUG] REDIRECT_URI in env: {os.environ.get('REDIRECT_URI', 'NOT SET')}", flush=True)
     railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
     if railway_domain:
         os.environ["REDIRECT_URI"] = f"https://{railway_domain}/auth/callback"
     s = Settings()
-    print(f"[DEBUG] settings.redirect_uri = {s.redirect_uri}", flush=True)
     yaml_cfg = _load_yaml_config()
 
     if "notion" in yaml_cfg:
