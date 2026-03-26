@@ -1,0 +1,10 @@
+agent:
+  model: llama-3.3-70b-versatile
+  max_tokens: 4096
+  batch_size: 10          # pages processed per run
+
+notion:
+  mcp_server_command: npx
+  mcp_server_args:
+    - "-y"
+    - "@notionhq/notion-mcp-server"

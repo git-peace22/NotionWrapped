@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎉 Notion Wrapped</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #000; color: #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Slide system ──────────────────────────────────────────────── */
+    .slide {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 56px 40px; text-align: center;
+      opacity: 0; pointer-events: none;
+      /* slides start off-screen right; landing overridden below */
+      transform: translateX(100%);
+      transition: none;
+    }
+
+    /* ── Gradient backgrounds ──────────────────────────────────────── */
+    #slide-landing   { background: radial-gradient(ellipse at 50% -10%, #2d1b69 0%, #000 65%); }
+    #slide-loading   { background: #000; }
+    #slide-numbers   { background: linear-gradient(155deg, #0f0c29 0%, #302b63 55%, #24243e 100%); }
+    #slide-obsessions{ background: linear-gradient(155deg, #360033 0%, #0b8793 100%); }
+    #slide-month     { background: linear-gradient(155deg, #134e5e 0%, #71b280 100%); }
+    #slide-graveyard { background: linear-gradient(155deg, #0d0d0d 0%, #1c1c1c 100%); }
+    #slide-gem       { background: linear-gradient(155deg, #6b3a00 0%, #d4a017 60%, #6b3a00 100%); color: #1a0f00; }
+    #slide-roast-1   { background: linear-gradient(155deg, #160000 0%, #7f0000 100%); }
+    #slide-roast-2   { background: linear-gradient(155deg, #1a0000 0%, #900000 100%); }
+    #slide-roast-3   { background: linear-gradient(155deg, #1e0000 0%, #b00000 100%); }
+    #slide-oneword   { background: linear-gradient(155deg, #0f0c29 0%, #4a44b0 60%, #6c63ff 100%); }
+    #slide-done      { background: radial-gradient(ellipse at 50% 110%, #2d1b69 0%, #000 60%); }
+
+    /* ── Typography ────────────────────────────────────────────────── */
+    .eyebrow {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 4px; text-transform: uppercase;
+      opacity: 0.5; margin-bottom: 28px;
+    }
+    .slide-title {
+      font-size: clamp(36px, 6vw, 62px);
+      font-weight: 900; line-height: 1.05; margin-bottom: 20px;
+    }
+    .slide-body {
+      font-size: clamp(16px, 2.2vw, 20px);
+      opacity: 0.65; line-height: 1.6; max-width: 520px;
+    }
+    .slide-emoji { font-size: clamp(48px, 7vw, 72px); margin-bottom: 20px; display: block; }
+
+    /* Stats row */
+    .stats-row {
+      display: flex; gap: clamp(32px, 6vw, 80px);
+      margin: 36px 0; flex-wrap: wrap; justify-content: center;
+    }
+    .stat-block { text-align: center; }
+    .stat-value {
+      font-size: clamp(52px, 10vw, 96px);
+      font-weight: 900; line-height: 1; letter-spacing: -3px;
+    }
+    .stat-label {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      opacity: 0.45; margin-top: 10px;
+    }
+
+    /* Obsessions list */
+    .obs-list { list-style: none; margin-top: 28px; width: 100%; max-width: 480px; }
+    .obs-list li {
+      font-size: clamp(20px, 3.5vw, 32px); font-weight: 800;
+      padding: 7px 0; opacity: 0;
+      transform: translateX(-24px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      text-align: left;
+    }
+    .obs-list li.in { opacity: 1; transform: translateX(0); }
+    .obs-num { opacity: 0.25; font-size: 0.65em; margin-right: 14px; }
+
+    /* Big centered month number */
+    .big-num {
+      font-size: clamp(80px, 16vw, 150px);
+      font-weight: 900; line-height: 1; letter-spacing: -5px;
+    }
+
+    /* Graveyard list */
+    .grave-list { list-style: none; margin-top: 20px; }
+    .grave-list li {
+      font-size: clamp(14px, 2vw, 17px); opacity: 0.45;
+      padding: 3px 0; text-decoration: line-through;
+    }
+
+    /* Roast text */
+    .roast-text {
+      font-size: clamp(20px, 3.5vw, 34px);
+      font-weight: 700; line-height: 1.45; max-width: 580px;
+    }
+
+    /* One word */
+    .one-word {
+      font-size: clamp(56px, 13vw, 120px);
+      font-weight: 900; line-height: 1; letter-spacing: -4px;
+      animation: glow 2.5s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%,100% { text-shadow: 0 0 40px rgba(108,99,255,0.4); }
+      50%      { text-shadow: 0 0 90px rgba(108,99,255,0.9), 0 0 140px rgba(108,99,255,0.35); }
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: linear-gradient(135deg, #6c63ff, #a855f7);
+      color: #fff; border: none; border-radius: 100px;
+      padding: 18px 48px; font-size: 17px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      box-shadow: 0 0 40px rgba(108,99,255,0.45);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none; display: inline-block; margin-top: 36px;
+    }
+    .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 64px rgba(108,99,255,0.65); }
+
+    .btn-ghost {
+      background: transparent; color: rgba(255,255,255,0.6);
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 100px;
+      padding: 14px 36px; font-size: 14px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      transition: all 0.2s; margin-top: 16px;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+    /* Loading */
+    .load-emoji { font-size: 72px; display: block; animation: float 2.2s ease-in-out infinite; }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-18px); }
+    }
+    .load-title  { font-size: 22px; font-weight: 700; margin-top: 32px; }
+    .load-sub    { font-size: 14px; opacity: 0.4; margin-top: 10px; }
+    .dots        { margin-top: 28px; }
+    .dots span {
+      display: inline-block; width: 8px; height: 8px;
+      background: rgba(255,255,255,0.45); border-radius: 50%; margin: 0 5px;
+      animation: bounce 1.3s ease-in-out infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); opacity: 0.3; }
+      50%      { transform: translateY(-9px); opacity: 1; }
+    }
+
+    /* Progress bar */
+    .prog-wrap { width: 180px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 36px; overflow: hidden; }
+    .prog-fill  { height: 100%; background: linear-gradient(90deg, #6c63ff, #a855f7); border-radius: 2px; width: 0; }
+
+    /* Slide counter */
+    #counter {
+      position: fixed; top: 22px; right: 24px;
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      opacity: 0.3; display: none; z-index: 200;
+    }
+
+    /* Tap hint */
+    .tap {
+      position: absolute; bottom: 28px;
+      font-size: 11px; letter-spacing: 2px;
+      opacity: 0.25; text-transform: uppercase;
+    }
+
+    /* Content entry animations */
+    .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .fade-up.in { opacity: 1; transform: translateY(0); }
+    .d1 { transition-delay: 0.1s; }
+    .d2 { transition-delay: 0.28s; }
+    .d3 { transition-delay: 0.46s; }
+    .d4 { transition-delay: 0.62s; }
+
+    /* Gem slide text color overrides */
+    #slide-gem .eyebrow  { color: rgba(0,0,0,0.45); }
+    #slide-gem .tap      { color: rgba(0,0,0,0.25); }
+    #slide-gem .slide-body { color: rgba(0,0,0,0.6); opacity: 1; }
+    #slide-gem .slide-title { color: #1a0f00; }
+  </style>
+</head>
+<body>
+
+<div id="counter"></div>
+
+<!-- ════════════════════════════════ LANDING ═══════════════════════════════ -->
+<div id="slide-landing" class="slide">
+  <span class="slide-emoji">🎉</span>
+  <h1 class="slide-title" style="font-size:clamp(44px,8vw,76px);">Notion Wrapped</h1>
+  <p class="slide-body">Find out what's <em>really</em> been living rent-free in your head.</p>
+
+  <!-- Unauthenticated state -->
+  <div id="state-unauthed">
+    <a href="/auth/login" class="btn-primary" style="text-decoration:none;display:inline-block;margin-top:36px;">
+      Connect with Notion →
+    </a>
+    <p style="font-size:12px;opacity:0.3;margin-top:16px;">You'll be asked to authorize access to your pages</p>
+  </div>
+
+  <!-- Authenticated state (hidden until token detected) -->
+  <div id="state-authed" style="display:none;margin-top:36px;">
+    <p id="workspace-label" style="font-size:13px;opacity:0.45;margin-bottom:16px;letter-spacing:1px;"></p>
+    <button class="btn-primary" id="btn-go">✨ &nbsp;Generate My Wrapped</button>
+    <br>
+    <button onclick="disconnect()" style="background:none;border:none;color:rgba(255,255,255,0.25);font-size:12px;cursor:pointer;margin-top:16px;font-family:inherit;letter-spacing:1px;">
+      Disconnect
+    </button>
+  </div>
+
+  <p id="auth-error" style="font-size:13px;color:#ff6b6b;margin-top:16px;display:none;"></p>
+  <p style="font-size:11px;opacity:0.2;margin-top:28px;letter-spacing:2px;text-transform:uppercase;">Notion × MLH Hackathon</p>
+</div>
+
+<!-- ════════════════════════════════ LOADING ══════════════════════════════ -->
+<div id="slide-loading" class="slide">
+  <span class="load-emoji" id="load-emoji">🧠</span>
+  <p class="load-title" id="load-title">Scanning your pages...</p>
+  <p class="load-sub"   id="load-sub">Reading everything you've ever written</p>
+  <div class="dots"><span></span><span></span><span></span></div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog-fill"></div></div>
+</div>
+
+<!-- ════════════════════════════════ NUMBERS ══════════════════════════════ -->
+<div id="slide-numbers" class="slide" onclick="next()">
+  <p class="eyebrow fade-up d1">This is your Notion</p>
+  <div class="stats-row fade-up d2">
+    <div class="stat-block">
+      <div class="stat-value" id="s-pages">0</div>
+      <div class="stat-label">Pages</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-value" id="s-words">0</div>
+      <div class="stat-label">Words Written</div>
+    </div>
+  </div>
+  <p class="slide-body fade-up d3" id="s-range"></p>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ OBSESSIONS ═══════════════════════════ -->
+<div id="slide-obsessions" class="slide" onclick="next()">
+  <p class="eyebrow fade-up d1">You can't stop thinking about</p>
+  <h2 class="slide-title fade-up d2">Your Top<br>Obsessions</h2>
+  <ol class="obs-list" id="obs-list"></ol>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ MONTH ════════════════════════════════ -->
+<div id="slide-month" class="slide" onclick="next()">
+  <p class="eyebrow fade-up d1">Your most productive month</p>
+  <div class="big-num fade-up d2" id="s-month-count"></div>
+  <p class="slide-title fade-up d3" style="margin-top:14px;" id="s-month-name"></p>
+  <p class="slide-body fade-up d4">pages created that month</p>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ GRAVEYARD ════════════════════════════ -->
+<div id="slide-graveyard" class="slide" onclick="next()">
+  <span class="slide-emoji fade-up d1">🪦</span>
+  <p class="eyebrow fade-up d1">ideas that never made it</p>
+  <h2 class="slide-title fade-up d2" id="s-grave-count"></h2>
+  <ul class="grave-list fade-up d3" id="s-grave-list"></ul>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ HIDDEN GEM ═══════════════════════════ -->
+<div id="slide-gem" class="slide" onclick="next()">
+  <span class="slide-emoji fade-up d1">💎</span>
+  <p class="eyebrow fade-up d1">You wrote this. Then forgot it.</p>
+  <h2 class="slide-title fade-up d2" id="s-gem-title"></h2>
+  <p class="slide-body fade-up d3" id="s-gem-reason"></p>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ ROAST 1 ══════════════════════════════ -->
+<div id="slide-roast-1" class="slide" onclick="next()">
+  <p class="eyebrow fade-up d1">🎤 &nbsp;The Roast &nbsp;·&nbsp; 1 / 3</p>
+  <p class="roast-text fade-up d2" id="s-roast-1"></p>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ ROAST 2 ══════════════════════════════ -->
+<div id="slide-roast-2" class="slide" onclick="next()">
+  <p class="eyebrow fade-up d1">🎤 &nbsp;The Roast &nbsp;·&nbsp; 2 / 3</p>
+  <p class="roast-text fade-up d2" id="s-roast-2"></p>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ ROAST 3 ══════════════════════════════ -->
+<div id="slide-roast-3" class="slide" onclick="next()">
+  <p class="eyebrow fade-up d1">🎤 &nbsp;The Roast &nbsp;·&nbsp; 3 / 3</p>
+  <p class="roast-text fade-up d2" id="s-roast-3"></p>
+  <span class="tap">Tap to continue →</span>
+</div>
+
+<!-- ════════════════════════════════ ONE WORD ═════════════════════════════ -->
+<div id="slide-oneword" class="slide" onclick="next()">
+  <p class="eyebrow fade-up d1">In one word, you are a</p>
+  <div class="one-word fade-up d2" id="s-oneword"></div>
+  <span class="tap" style="margin-top:48px;">Tap to see your Notion page →</span>
+</div>
+
+<!-- ════════════════════════════════ DONE ═════════════════════════════════ -->
+<div id="slide-done" class="slide">
+  <span class="slide-emoji fade-up d1">✨</span>
+  <h2 class="slide-title fade-up d2">Your Wrapped is<br>live in Notion</h2>
+  <p class="slide-body fade-up d3" style="margin-top:4px;">We saved a beautiful version directly to your workspace.</p>
+  <a id="s-notion-link" href="#" target="_blank" class="btn-primary fade-up d4">Open in Notion →</a>
+  <br>
+  <button class="btn-ghost" onclick="reset()" style="margin-top:16px;">Run Again</button>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────
+const SLIDES = [
+  'slide-numbers','slide-obsessions','slide-month',
+  'slide-graveyard','slide-gem',
+  'slide-roast-1','slide-roast-2','slide-roast-3',
+  'slide-oneword','slide-done',
+];
+
+let current = 'slide-landing';
+let slideIdx = -1;
+let data     = null;
+
+const LOADING = [
+  { e:'🔍', t:'Scanning your pages…',       s:'Reading everything you\'ve ever written' },
+  { e:'🧠', t:'Analyzing your brain…',      s:'Finding your deepest obsessions' },
+  { e:'😏', t:'Writing your roast…',        s:'This might sting a little' },
+  { e:'💎', t:'Uncovering hidden gems…',    s:'Finding what you forgot' },
+  { e:'✨', t:'Almost there…',              s:'Assembling your Notion Wrapped page' },
+];
+
+let loadTimer = null, loadIdx = 0;
+
+// ── Slide transition ─────────────────────────────────────────────────────
+function goTo(id, fromRight = true) {
+  const curr = document.getElementById(current);
+  const next = document.getElementById(id);
+
+  // Exit current
+  curr.style.transition = 'opacity 0.45s ease, transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94)';
+  curr.style.opacity    = '0';
+  curr.style.transform  = fromRight ? 'translateX(-100%)' : 'translateX(100%)';
+  curr.style.pointerEvents = 'none';
+
+  // Reset next for entry
+  next.style.transition = 'none';
+  next.style.transform  = fromRight ? 'translateX(100%)' : 'translateX(-100%)';
+  next.style.opacity    = '0';
+  next.style.pointerEvents = 'none';
+
+  // Trigger reflow then animate in
+  next.getBoundingClientRect();
+  next.style.transition = 'opacity 0.45s ease, transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94)';
+  next.style.transform  = 'translateX(0)';
+  next.style.opacity    = '1';
+
+  setTimeout(() => { next.style.pointerEvents = 'all'; }, 460);
+
+  // Trigger content animations
+  next.querySelectorAll('.fade-up').forEach(el => {
+    el.classList.remove('in');
+    void el.offsetWidth;
+    el.classList.add('in');
+  });
+
+  // Obsessions stagger
+  if (id === 'slide-obsessions') {
+    setTimeout(() => {
+      document.querySelectorAll('.obs-list li').forEach((li, i) => {
+        setTimeout(() => li.classList.add('in'), 320 + i * 130);
+      });
+    }, 350);
+  }
+
+  // Count-up numbers
+  if (id === 'slide-numbers' && data) {
+    setTimeout(() => {
+      countUp('s-pages', data.stats.total_pages, 900);
+      countUp('s-words', data.stats.total_words, 1300, true);
+    }, 350);
+  }
+
+  // Update counter
+  const idx = SLIDES.indexOf(id);
+  const ctr = document.getElementById('counter');
+  if (idx >= 0 && idx < SLIDES.length - 1) {
+    ctr.style.display = 'block';
+    ctr.textContent   = `${idx + 1} / ${SLIDES.length - 1}`;
+  } else {
+    ctr.style.display = 'none';
+  }
+
+  current  = id;
+  slideIdx = idx;
+}
+
+function next() {
+  if (slideIdx >= 0 && slideIdx < SLIDES.length - 1) {
+    goTo(SLIDES[slideIdx + 1]);
+  }
+}
+
+function reset() {
+  goTo('slide-landing', false);
+  slideIdx = -1;
+  data = null;
+  document.getElementById('counter').style.display = 'none';
+  // Reset progress bar
+  const fill = document.getElementById('prog-fill');
+  fill.style.transition = 'none'; fill.style.width = '0';
+  loadIdx = 0;
+}
+
+// ── Auth init ────────────────────────────────────────────────────────────
+(function initAuth() {
+  const params = new URLSearchParams(window.location.search);
+
+  // Handle OAuth callback: ?token=xxx&workspace=xxx
+  if (params.has('token')) {
+    localStorage.setItem('notion_token', params.get('token'));
+    localStorage.setItem('notion_workspace', params.get('workspace') || 'your workspace');
+    history.replaceState({}, '', '/');
+  }
+
+  // Handle OAuth error
+  if (params.has('error')) {
+    document.getElementById('auth-error').textContent = 'Auth failed: ' + params.get('error');
+    document.getElementById('auth-error').style.display = 'block';
+    history.replaceState({}, '', '/');
+  }
+
+  const token = localStorage.getItem('notion_token');
+  if (token) {
+    document.getElementById('state-unauthed').style.display = 'none';
+    document.getElementById('state-authed').style.display   = 'block';
+    const ws = localStorage.getItem('notion_workspace') || 'your workspace';
+    document.getElementById('workspace-label').textContent  = `✓ Connected to ${ws}`;
+  }
+
+  // Show landing slide
+  const landing = document.getElementById('slide-landing');
+  landing.style.opacity       = '1';
+  landing.style.transform     = 'translateX(0)';
+  landing.style.pointerEvents = 'all';
+  landing.querySelectorAll('.fade-up').forEach(el => el.classList.add('in'));
+})();
+
+function disconnect() {
+  localStorage.removeItem('notion_token');
+  localStorage.removeItem('notion_workspace');
+  location.reload();
+}
+
+// ── Generate ─────────────────────────────────────────────────────────────
+document.getElementById('btn-go').addEventListener('click', async (e) => {
+  e.stopPropagation();
+
+  goTo('slide-loading');
+  startLoading();
+
+  const token = localStorage.getItem('notion_token');
+
+  try {
+    const res = await fetch('/generate', {
+      method: 'POST',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+    const body = await res.json();
+    stopLoading();
+
+    if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem('notion_token');
+        localStorage.removeItem('notion_workspace');
+        alert('Session expired. Please reconnect with Notion.');
+        location.reload();
+        return;
+      }
+      alert('Error: ' + (body.error || 'Something went wrong'));
+      reset(); return;
+    }
+
+    data = body;
+    populate(data);
+    goTo('slide-numbers');
+
+  } catch (err) {
+    stopLoading();
+    alert('Connection error. Make sure the server is running.');
+    reset();
+  }
+});
+
+// ── Loading animation ────────────────────────────────────────────────────
+function startLoading() {
+  setLoadStage(0);
+  // Animate progress bar
+  const fill = document.getElementById('prog-fill');
+  fill.style.transition = 'width 18s linear';
+  fill.style.width = '82%';
+  loadTimer = setInterval(() => {
+    loadIdx = Math.min(loadIdx + 1, LOADING.length - 1);
+    setLoadStage(loadIdx);
+  }, 3800);
+}
+
+function setLoadStage(i) {
+  const s = LOADING[i];
+  document.getElementById('load-emoji').textContent = s.e;
+  document.getElementById('load-title').textContent = s.t;
+  document.getElementById('load-sub').textContent   = s.s;
+}
+
+function stopLoading() {
+  clearInterval(loadTimer);
+  loadIdx = 0;
+}
+
+// ── Populate slides ──────────────────────────────────────────────────────
+function populate(d) {
+  const { stats, analysis, hidden_gem_title, notion_url } = d;
+
+  // Numbers
+  document.getElementById('s-range').textContent = stats.date_range_str || '';
+
+  // Obsessions
+  const obsEl = document.getElementById('obs-list');
+  obsEl.innerHTML = '';
+  (analysis.top_obsessions || []).forEach((t, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="obs-num">0${i+1}</span>${t}`;
+    obsEl.appendChild(li);
+  });
+
+  // Month
+  document.getElementById('s-month-count').textContent = stats.hottest_month_count ?? '—';
+  document.getElementById('s-month-name').textContent  = stats.hottest_month || 'Unknown';
+
+  // Graveyard
+  const gt = stats.graveyard_total || 0;
+  document.getElementById('s-grave-count').textContent =
+    gt > 0 ? `${gt} abandoned idea${gt !== 1 ? 's' : ''}` : 'Nothing abandoned';
+  const gList = document.getElementById('s-grave-list');
+  gList.innerHTML = '';
+  (stats.graveyard || []).forEach(title => {
+    const li = document.createElement('li'); li.textContent = title; gList.appendChild(li);
+  });
+
+  // Hidden gem
+  document.getElementById('s-gem-title').textContent  = `"${hidden_gem_title}"`;
+  document.getElementById('s-gem-reason').textContent = analysis.hidden_gem_reason || '';
+
+  // Roast
+  const r = analysis.roast_lines || [];
+  document.getElementById('s-roast-1').textContent = r[0] || '';
+  document.getElementById('s-roast-2').textContent = r[1] || '';
+  document.getElementById('s-roast-3').textContent = r[2] || '';
+
+  // One word
+  document.getElementById('s-oneword').textContent = (analysis.one_word_summary || 'Thinker').toUpperCase();
+
+  // Notion link
+  if (notion_url) document.getElementById('s-notion-link').href = notion_url;
+}
+
+// ── Count-up animation ────────────────────────────────────────────────────
+function countUp(id, target, ms, comma = false) {
+  const el = document.getElementById(id);
+  const t0 = performance.now();
+  (function tick(now) {
+    const p = Math.min((now - t0) / ms, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val  = Math.round(target * ease);
+    el.textContent = comma ? val.toLocaleString() : val;
+    if (p < 1) requestAnimationFrame(tick);
+  })(performance.now());
+}
+
+// ── Keyboard navigation ───────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') next();
+});
+</script>
+</body>
+</html>
