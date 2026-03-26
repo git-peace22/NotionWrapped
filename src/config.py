@@ -45,10 +45,11 @@ def _load_yaml_config() -> dict:
 
 def _build_settings() -> Settings:
     import os
-    # Railway provides RAILWAY_PUBLIC_DOMAIN automatically when a domain is attached.
-    # Use it to construct REDIRECT_URI so we don't have to set it manually.
+    railway_vars = {k: v for k, v in os.environ.items() if "RAILWAY" in k or k == "PORT"}
+    print(f"[DEBUG] railway vars: {railway_vars}", flush=True)
+    print(f"[DEBUG] REDIRECT_URI in env: {os.environ.get('REDIRECT_URI', 'NOT SET')}", flush=True)
     railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
-    if railway_domain and not os.environ.get("REDIRECT_URI"):
+    if railway_domain:
         os.environ["REDIRECT_URI"] = f"https://{railway_domain}/auth/callback"
     s = Settings()
     yaml_cfg = _load_yaml_config()
